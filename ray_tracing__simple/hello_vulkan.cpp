@@ -587,16 +587,62 @@ void HelloVulkan::drawPost(VkCommandBuffer cmdBuf)
 void HelloVulkan::initRayTracing()
 {
   // Requesting ray tracing properties
+  // 把vk的property放到pNext下面, 这样才能获取到ray tracing的property, 即把m_rtProperties填满信息.
+
   VkPhysicalDeviceProperties2 prop2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
   prop2.pNext = &m_rtProperties;
+  // 再加一个. 所有的 properties都在vulkaninfo里面可以看到.
+  VkPhysicalDeviceAccelerationStructurePropertiesKHR asProp{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR};
+  m_rtProperties.pNext = &asProp;
   vkGetPhysicalDeviceProperties2(m_physicalDevice, &prop2);
 
+  std::cout << "VkPhysicalDeviceRayTracingPipelinePropertiesKHR:" << std::endl
+            << "    shaderGroupHandleSize=" << m_rtProperties.shaderGroupHandleSize << std::endl
+            << "    maxRayRecursionDepth=" << m_rtProperties.maxRayRecursionDepth << std::endl
+            << "    maxShaderGroupStride=" << m_rtProperties.maxShaderGroupStride << std::endl
+            << "    shaderGroupBaseAlignment=" << m_rtProperties.shaderGroupBaseAlignment << std::endl
+            << "    shaderGroupHandleCaptureReplaySize=" << m_rtProperties.shaderGroupHandleCaptureReplaySize << std::endl
+            << "    maxRayDispatchInvocationCount=" << m_rtProperties.maxRayDispatchInvocationCount << std::endl
+            << "    shaderGroupHandleAlignment=" << m_rtProperties.shaderGroupHandleAlignment << std::endl
+            << "    maxRayHitAttributeSize=" << m_rtProperties.maxRayHitAttributeSize << std::endl;
+  std::cout << "VkPhysicalDeviceAccelerationStructurePropertiesKHR:" << std::endl
+            << "    maxGeometryCount=" << asProp.maxGeometryCount << std::endl
+            << "    maxInstanceCount=" << asProp.maxInstanceCount << std::endl
+            << "    maxPrimitiveCount=" << asProp.maxPrimitiveCount << std::endl
+            << "    maxPerStageDescriptorAccelerationStructures=" << asProp.maxPerStageDescriptorAccelerationStructures << std::endl
+            << "    maxPerStageDescriptorUpdateAfterBindAccelerationStructures=" << asProp.maxPerStageDescriptorUpdateAfterBindAccelerationStructures << std::endl
+            << "    maxDescriptorSetAccelerationStructures=" << asProp.maxDescriptorSetAccelerationStructures << std::endl
+            << "    maxDescriptorSetUpdateAfterBindAccelerationStructures=" << asProp.maxDescriptorSetUpdateAfterBindAccelerationStructures << std::endl
+            << "    minAccelerationStructureScratchOffsetAlignment=" << asProp.minAccelerationStructureScratchOffsetAlignment << std::endl;
+
+/*
+NV T4 gpu
+VkPhysicalDeviceRayTracingPipelinePropertiesKHR:
+    shaderGroupHandleSize=32
+    maxRayRecursionDepth=31
+    maxShaderGroupStride=4096
+    shaderGroupBaseAlignment=64
+    shaderGroupHandleCaptureReplaySize=32
+    maxRayDispatchInvocationCount=1073741824
+    shaderGroupHandleAlignment=32
+    maxRayHitAttributeSize=32
+VkPhysicalDeviceAccelerationStructurePropertiesKHR:
+    maxGeometryCount=16777215
+    maxInstanceCount=16777215
+    maxPrimitiveCount=536870911
+    maxPerStageDescriptorAccelerationStructures=1048576
+    maxPerStageDescriptorUpdateAfterBindAccelerationStructures=1048576
+    maxDescriptorSetAccelerationStructures=1048576
+    maxDescriptorSetUpdateAfterBindAccelerationStructures=1048576
+    minAccelerationStructureScratchOffsetAlignment=128
+*/
   m_rtBuilder.setup(m_device, &m_alloc, m_graphicsQueueIndex);
 }
 
 //--------------------------------------------------------------------------------------------------
 // Convert an OBJ model into the ray tracing geometry used to build the BLAS
 //
+// 主要就是把model里面的vbo/ebo的gpu mem 地址拿过来, 填充VkAccelerationStructureGeometryKHR
 auto HelloVulkan::objectToVkGeometryKHR(const ObjModel& model)
 {
   // BLAS builder requires raw device addresses.

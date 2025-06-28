@@ -80,8 +80,11 @@ public:
   };
 
   // Array of objects and instances in the scene
+  // 放房子的点信息, vertex, index, etc, 都是已经放在vkBuffer里面了, 在device_local memory
   std::vector<ObjModel>    m_objModel;   // Model on host
+  // 就是m_objModel里面的buffer的地址, 不是给cpu访问的, 而是(用ssbo)传到shader里面gpu可以访问
   std::vector<ObjDesc>     m_objDesc;    // Model description for device access
+  // 只是房子的transform matrix, 4x4, 不知道是哪个space到哪个.
   std::vector<ObjInstance> m_instances;  // Scene model instances
 
 
@@ -96,6 +99,7 @@ public:
   nvvk::Buffer m_bGlobals;  // Device-Host of the camera matrices
   nvvk::Buffer m_bObjDesc;  // Device buffer of the OBJ descriptions
 
+  // 房子的图片放这里.
   std::vector<nvvk::Texture> m_textures;  // vector of all textures of the scene
 
 
